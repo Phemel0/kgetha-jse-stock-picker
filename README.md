@@ -103,7 +103,7 @@ Landing sections live in `components/landing/`. Its warm neutral theme and Instr
 
 ## UI
 
-The dashboard is built with [shadcn/ui](https://ui.shadcn.com) components (Radix primitives + Tailwind v4), which live as editable source in `components/ui`. The theme tokens in `app/globals.css` map shadcn's colour variables onto Kgetha's palette, with an extra colour per factor (`--value`, `--quality`, `--momentum`). Light and dark follow the system setting.
+The dashboard is built with [shadcn/ui](https://ui.shadcn.com) components (Radix primitives + Tailwind v4), which live as editable source in `components/ui`. The picker uses shadcn's default white (neutral) theme, defined as CSS variables in `app/globals.css`, plus one extra colour per factor (`--value`, `--quality`, `--momentum`). It is light-only.
 
 Add more components the usual way:
 

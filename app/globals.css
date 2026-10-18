@@ -1,68 +1,42 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Dark mode follows the system setting; shadcn's `dark:` utilities use the same switch. */
-@custom-variant dark (@media (prefers-color-scheme: dark));
+/* shadcn's class-based dark variant. The picker uses the light (white) theme only. */
+@custom-variant dark (&:is(.dark *));
 
 /*
- * shadcn/ui theme tokens, set to Kgetha's palette: cool mineral paper, bottle-green ink,
- * and one colour per factor — ochre for value, slate for quality, green for momentum.
+ * shadcn/ui default theme ("neutral", white). Kgetha adds one colour per factor
+ * — ochre for value, slate for quality, green for momentum — used in charts and labels.
  */
 :root {
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
-  --background: #eef0ea;
-  --foreground: #13261f;
-  --card: #f7f8f4;
-  --card-foreground: #13261f;
-  --popover: #f7f8f4;
-  --popover-foreground: #13261f;
-  --primary: #1d3a2f;
-  --primary-foreground: #eef0ea;
-  --secondary: #e1e6de;
-  --secondary-foreground: #13261f;
-  --muted: #e1e6de;
-  --muted-foreground: #56645c;
-  --accent: #e1e6de;
-  --accent-foreground: #13261f;
-  --destructive: #b4472c;
-  --border: #cfd5cc;
-  --input: #c2c9bf;
-  --ring: #3e6a8a;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
 
   /* Factor colours */
   --value: #a8761c;
   --quality: #3e6a8a;
   --momentum: #2e7d57;
   --warn: #8a6a12;
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f1714;
-    --foreground: #e2e8e1;
-    --card: #16211c;
-    --card-foreground: #e2e8e1;
-    --popover: #16211c;
-    --popover-foreground: #e2e8e1;
-    --primary: #d4e3d8;
-    --primary-foreground: #0f1714;
-    --secondary: #22302a;
-    --secondary-foreground: #e2e8e1;
-    --muted: #22302a;
-    --muted-foreground: #9aa79f;
-    --accent: #22302a;
-    --accent-foreground: #e2e8e1;
-    --destructive: #e07a5f;
-    --border: #2a3832;
-    --input: #34443d;
-    --ring: #7fa8c6;
-
-    --value: #d6a647;
-    --quality: #7fa8c6;
-    --momentum: #5fb88a;
-    --warn: #d9b45a;
-  }
+  color-scheme: light;
 }
 
 @theme inline {
@@ -130,7 +104,7 @@
 
 /* ------------------------------------------------------------------ */
 /* Landing page (ported from the Optimus design).                      */
-/* Scoped to .landing so the picker keeps the Kgetha dashboard theme.  */
+/* Scoped to .landing so the picker keeps the shadcn white theme.       */
 /* Light only: the canvas animations draw in black.                    */
 /* ------------------------------------------------------------------ */
 .landing {
