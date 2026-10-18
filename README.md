@@ -92,6 +92,16 @@ If the snapshot gets more than 4 days old, the dashboard shows a warning so you 
 
 The share list lives in `agent/universe.ts`: a starter set of ~45 large JSE shares. It isn't an official index list — edit it to suit you. Shares roic.ai doesn't recognise are skipped and listed at the bottom of the dashboard.
 
+## UI
+
+The dashboard is built with [shadcn/ui](https://ui.shadcn.com) components (Radix primitives + Tailwind v4), which live as editable source in `components/ui`. The theme tokens in `app/globals.css` map shadcn's colour variables onto Kgetha's palette, with an extra colour per factor (`--value`, `--quality`, `--momentum`). Light and dark follow the system setting.
+
+Add more components the usual way:
+
+```bash
+npx shadcn@latest add dialog tabs
+```
+
 ## Scripts
 
 | Command | |

@@ -19,7 +19,7 @@ export default function Home() {
     return (
       <main className="mx-auto max-w-xl px-4 py-24">
         <h1 className="text-2xl font-semibold">No data yet</h1>
-        <p className="mt-3 text-muted">
+        <p className="mt-3 text-muted-foreground">
           Run <code>npm run agent</code> to collect JSE data, or <code>npm run demo-data</code> to try the dashboard with
           invented companies.
         </p>

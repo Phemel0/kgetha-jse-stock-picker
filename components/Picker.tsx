@@ -1,25 +1,47 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, Info, TriangleAlert } from "lucide-react";
 import type { PicksLog } from "@/app/page";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { longDate, rand, signed } from "@/lib/format";
 import { DEFAULT_FILTERS, DEFAULT_WEIGHTS, GROUPS, GROUP_LABEL, scoreUniverse } from "@/lib/scoring";
-import type { Filters, Snapshot, Weights } from "@/lib/types";
-import { ContributionBar, groupColor } from "./bits";
-import StockDrawer from "./StockDrawer";
+import type { FactorGroup, Filters, Snapshot, Weights } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { ContributionBar, groupColor, tint } from "./bits";
+import StockSheet from "./StockSheet";
 
-const PRESETS: { label: string; weights: Weights }[] = [
-  { label: "Balanced", weights: DEFAULT_WEIGHTS },
-  { label: "Value first", weights: { value: 60, quality: 30, momentum: 10 } },
-  { label: "Momentum first", weights: { value: 15, quality: 15, momentum: 70 } },
+const PRESETS: { id: string; label: string; weights: Weights }[] = [
+  { id: "balanced", label: "Balanced", weights: DEFAULT_WEIGHTS },
+  { id: "value", label: "Value", weights: { value: 60, quality: 30, momentum: 10 } },
+  { id: "momentum", label: "Momentum", weights: { value: 15, quality: 15, momentum: 70 } },
 ];
+
+const GROUP_HINT: Record<FactorGroup, string> = {
+  value: "P/E, free-cash-flow, EV/EBITDA and book multiples",
+  quality: "Returns on equity and capital, margins, debt",
+  momentum: "6- and 12-month returns, position vs 200-day average",
+};
 
 const SHORTLIST = 5;
 
 export default function Picker({ snapshot, log }: { snapshot: Snapshot; log: PicksLog }) {
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  const [openCode, setOpenCode] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Remember the person's mix between visits.
   useEffect(() => {
@@ -42,284 +64,331 @@ export default function Picker({ snapshot, log }: { snapshot: Snapshot; log: Pic
     }
   }, [weights, filters]);
 
-  const ranked = useMemo(() => scoreUniverse(snapshot.stocks, weights, filters), [snapshot, weights, filters]);
-  const visible = ranked.filter((s) => s.passesFilters);
-  const shortlist = visible.slice(0, SHORTLIST);
-  const open = ranked.find((s) => s.code === openCode) ?? null;
-
-  const prevPicks = log.length > 1 ? new Set(log.at(-2)!.picks.map((p) => p.code)) : null;
-  const prevDate = log.length > 1 ? log.at(-2)!.date : null;
-  const isDemo = snapshot.source === "demo";
-  const total = GROUPS.reduce((a, g) => a + weights[g], 0) || 1;
-  const priceDate = snapshot.stocks.map((s) => s.priceDate).filter(Boolean).sort().at(-1);
   // Computed after mount: the page is pre-rendered, so "now" must be the viewer's clock, not the build's.
   const [ageDays, setAgeDays] = useState(0);
   useEffect(() => {
     setAgeDays(Math.floor((Date.now() - new Date(snapshot.generatedAt).getTime()) / 86_400_000));
   }, [snapshot.generatedAt]);
 
+  const ranked = useMemo(() => scoreUniverse(snapshot.stocks, weights, filters), [snapshot, weights, filters]);
+  const visible = ranked.filter((s) => s.passesFilters);
+  const shortlist = visible.slice(0, SHORTLIST);
+  const current = ranked.find((s) => s.code === selected) ?? null;
+
+  const prevPicks = log.length > 1 ? new Set(log.at(-2)!.picks.map((p) => p.code)) : null;
+  const prevDate = log.length > 1 ? log.at(-2)!.date : null;
+  const isDemo = snapshot.source === "demo";
+  const total = GROUPS.reduce((a, g) => a + weights[g], 0) || 1;
+  const priceDate = snapshot.stocks.map((s) => s.priceDate).filter(Boolean).sort().at(-1);
+  const activePreset = PRESETS.find((p) => GROUPS.every((g) => p.weights[g] === weights[g]))?.id ?? "";
+
+  const open = (code: string) => {
+    setSelected(code);
+    setSheetOpen(true);
+  };
+
   return (
     <div className="min-h-screen">
-      <header className="border-b border-rule">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-4 py-4 sm:px-6">
+      <header className="border-b">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 sm:px-6">
           <div className="flex items-baseline gap-3">
             <span className="code-display text-2xl">Kgetha</span>
-            <span className="text-muted">JSE stock picker</span>
+            <span className="text-muted-foreground">JSE stock picker</span>
           </div>
-          <p className="text-sm text-muted">
-            {isDemo ? "Demo data" : `Prices to ${priceDate ? longDate(priceDate) : "—"}, from roic.ai`}
-          </p>
+          {isDemo ? (
+            <Badge variant="outline" className="border-warn/50 text-warn">
+              Demo data
+            </Badge>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              Prices to {priceDate ? longDate(priceDate) : "—"}, from roic.ai
+            </p>
+          )}
         </div>
       </header>
 
-      {!isDemo && ageDays > 4 && (
-        <div className="border-b border-bad/40 bg-bad/10">
-          <p className="mx-auto max-w-7xl px-4 py-3 text-sm sm:px-6">
-            This data is {ageDays} days old. The agent may have stopped running — check the latest run under Actions in your
-            GitHub repo.
-          </p>
-        </div>
-      )}
+      <main className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+        {isDemo && (
+          <Alert className="border-warn/40 bg-warn/5">
+            <Info className="text-warn" />
+            <AlertTitle>You’re looking at invented companies with simulated prices.</AlertTitle>
+            <AlertDescription>
+              Add a roic.ai key and run the agent to screen real JSE shares. The README walks through it.
+            </AlertDescription>
+          </Alert>
+        )}
+        {!isDemo && ageDays > 4 && (
+          <Alert variant="destructive">
+            <TriangleAlert />
+            <AlertTitle>This data is {ageDays} days old.</AlertTitle>
+            <AlertDescription>
+              The agent may have stopped running. Check the latest run under Actions in your GitHub repo.
+            </AlertDescription>
+          </Alert>
+        )}
 
-      {isDemo && (
-        <div className="border-b border-warn/40 bg-warn/10">
-          <p className="mx-auto max-w-7xl px-4 py-3 text-sm sm:px-6">
-            <strong className="font-semibold">You’re looking at invented companies with simulated prices.</strong> Add a roic.ai
-            key and run the agent to screen real JSE shares — the README walks through it.
-          </p>
-        </div>
-      )}
-
-      <main className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* Shortlist */}
-        <section aria-labelledby="shortlist" className="py-8 sm:py-10">
+        <section aria-labelledby="shortlist">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h1 id="shortlist" className="text-xl font-semibold">
               Shortlist
             </h1>
-            <p className="text-sm text-muted">
+            <p className="text-muted-foreground text-sm">
               Top {shortlist.length} of {visible.length} shares on your current mix
             </p>
           </div>
 
           {shortlist.length === 0 ? (
-            <p className="mt-6 text-muted">No shares pass your filters. Loosen a filter on the left to see the ranking.</p>
+            <Card className="mt-4">
+              <CardContent className="text-muted-foreground">
+                No shares pass your filters. Loosen a filter to see the ranking.
+              </CardContent>
+            </Card>
           ) : (
-            <ol className="mt-5 grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-5">
+            <ol className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {shortlist.map((s) => (
-                <li key={s.code}>
-                  <button
-                    onClick={() => setOpenCode(s.code)}
-                    className="group block w-full text-left"
-                    aria-label={`${s.code}, ${s.name}, rank ${s.rank}, score ${s.score.toFixed(0)}. Open details.`}
-                  >
-                    <span className="code-display block text-[clamp(3rem,4.4vw,4.5rem)] group-hover:underline group-hover:decoration-2 group-hover:underline-offset-4">
-                      {s.code}
-                    </span>
-                    <div className="mt-3 flex items-center gap-3">
-                      <div className="flex-1">
-                        <ContributionBar stock={s} />
+                <li key={s.code} className="min-w-0">
+                  <Card className="hover:border-foreground/30 relative h-full gap-3 py-5 transition-colors">
+                    <CardHeader className="px-5">
+                      <CardDescription>#{s.rank}</CardDescription>
+                      <CardAction>
+                        {prevPicks && !prevPicks.has(s.code) && (
+                          <Badge className="bg-momentum/15 text-momentum border-transparent">New</Badge>
+                        )}
+                      </CardAction>
+                      <CardTitle>
+                        {/* The button stretches over the whole card, so anywhere on it opens the detail sheet. */}
+                        <button
+                          onClick={() => open(s.code)}
+                          className="code-display focus-visible:ring-ring/50 block text-[clamp(2.75rem,4vw,4rem)] outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-[3px]"
+                          aria-label={`${s.code}, ${s.name}, rank ${s.rank}, score ${s.score.toFixed(0)}. Open details.`}
+                        >
+                          {s.code}
+                        </button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 px-5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <ContributionBar stock={s} />
+                        </div>
+                        <span className="text-xl font-semibold tabular-nums">{s.score.toFixed(0)}</span>
                       </div>
-                      <span className="text-xl font-semibold tabular-nums">{s.score.toFixed(0)}</span>
-                    </div>
-                    <p className="mt-2 truncate text-sm font-medium">
-                      {s.name}
-                      {prevPicks && !prevPicks.has(s.code) && (
-                        <span className="ml-2 rounded-sm bg-momentum/15 px-1.5 py-0.5 text-xs font-semibold text-momentum">
-                          New
-                        </span>
-                      )}
-                    </p>
-                    <p className="mt-1 text-sm leading-snug text-muted">{s.thesis}</p>
-                  </button>
+                      <p className="truncate text-sm font-medium">{s.name}</p>
+                      <p className="text-muted-foreground text-sm leading-snug">{s.thesis}</p>
+                    </CardContent>
+                  </Card>
                 </li>
               ))}
             </ol>
           )}
         </section>
 
-        <div className="grid gap-8 border-t border-rule py-8 lg:grid-cols-[17rem_1fr] lg:gap-10">
+        <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
           {/* Controls */}
-          <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start" aria-label="Scoring controls">
-            <h2 className="font-semibold">Your mix</h2>
-            <p className="mt-1 text-sm text-muted">How much each kind of evidence counts toward the score.</p>
+          <Card className="min-w-0 gap-5 lg:sticky lg:top-6 lg:self-start" aria-label="Scoring controls">
+            <CardHeader>
+              <CardTitle>Your mix</CardTitle>
+              <CardDescription>How much each kind of evidence counts toward the score.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="flex h-2 overflow-hidden rounded-full" aria-hidden>
+                {GROUPS.map((g) => (
+                  <div key={g} style={{ width: `${(weights[g] / total) * 100}%`, background: groupColor[g] }} />
+                ))}
+              </div>
 
-            <div className="mt-4 flex h-2 overflow-hidden rounded-[2px]" aria-hidden>
               {GROUPS.map((g) => (
-                <div key={g} style={{ width: `${(weights[g] / total) * 100}%`, background: groupColor[g] }} />
-              ))}
-            </div>
-
-            <div className="mt-4 space-y-4">
-              {GROUPS.map((g) => (
-                <label key={g} className="block">
-                  <span className="flex justify-between text-sm">
-                    <span className="font-medium" style={{ color: groupColor[g] }}>
+                <div key={g} className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <Label id={`w-${g}`} style={{ color: groupColor[g] }}>
                       {GROUP_LABEL[g]}
+                    </Label>
+                    <span className="text-muted-foreground text-sm tabular-nums">
+                      {Math.round((weights[g] / total) * 100)}%
                     </span>
-                    <span className="tabular-nums text-muted">{Math.round((weights[g] / total) * 100)}%</span>
-                  </span>
-                  <input
-                    type="range"
+                  </div>
+                  <Slider
+                    value={[weights[g]]}
+                    onValueChange={([v]) => setWeights((w) => ({ ...w, [g]: v }))}
                     min={0}
                     max={100}
                     step={5}
-                    value={weights[g]}
-                    onChange={(e) => setWeights({ ...weights, [g]: Number(e.target.value) })}
-                    className="mt-1 w-full"
-                    style={{ color: groupColor[g] }}
+                    style={tint(g)}
+                    thumbLabels={[`${GROUP_LABEL[g]} weight`]}
                   />
-                  <span className="text-xs text-muted">
-                    {g === "value" && "P/E, free-cash-flow, EV/EBITDA and book multiples"}
-                    {g === "quality" && "Returns on equity and capital, margins, debt"}
-                    {g === "momentum" && "6- and 12-month returns, position vs 200-day average"}
-                  </span>
-                </label>
+                  <p className="text-muted-foreground text-xs">{GROUP_HINT[g]}</p>
+                </div>
               ))}
-            </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {PRESETS.map((p) => {
-                const active = GROUPS.every((g) => p.weights[g] === weights[g]);
-                return (
-                  <button
-                    key={p.label}
-                    onClick={() => setWeights(p.weights)}
-                    aria-pressed={active}
-                    className={`rounded-full border px-3 py-1 text-sm ${active ? "border-ink bg-ink text-paper" : "border-rule hover:border-ink"}`}
-                  >
+              <div className="space-y-2">
+              <p className="text-muted-foreground text-xs">Presets</p>
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={activePreset}
+                onValueChange={(id) => {
+                  const p = PRESETS.find((x) => x.id === id);
+                  if (p) setWeights(p.weights);
+                }}
+                className="w-full"
+                aria-label="Preset mixes"
+              >
+                {PRESETS.map((p) => (
+                  <ToggleGroupItem key={p.id} value={p.id} className="px-1.5 text-xs">
                     {p.label}
-                  </button>
-                );
-              })}
-            </div>
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+              </div>
 
-            <h2 className="mt-8 font-semibold">Filters</h2>
-            <div className="mt-3 space-y-3 text-sm">
-              <label className="flex gap-2">
-                <input
-                  type="checkbox"
-                  checked={filters.profitableOnly}
-                  onChange={(e) => setFilters({ ...filters, profitableOnly: e.target.checked })}
-                  className="mt-0.5"
-                />
-                Profitable companies only
-              </label>
-              <label className="flex gap-2">
-                <input
-                  type="checkbox"
-                  checked={filters.uptrendOnly}
-                  onChange={(e) => setFilters({ ...filters, uptrendOnly: e.target.checked })}
-                  className="mt-0.5"
-                />
-                Only shares above their 200-day average
-              </label>
-              <label className="block">
-                <span>Maximum net debt</span>
-                <select
-                  value={filters.maxNetDebtEbitda ?? ""}
-                  onChange={(e) => setFilters({ ...filters, maxNetDebtEbitda: e.target.value === "" ? null : Number(e.target.value) })}
-                  className="mt-1 block w-full rounded border border-rule bg-surface px-2 py-1.5"
-                >
-                  <option value="">Any amount</option>
-                  <option value="3">Up to 3× EBITDA</option>
-                  <option value="2">Up to 2× EBITDA</option>
-                  <option value="1">Up to 1× EBITDA</option>
-                </select>
-              </label>
-            </div>
-            <p className="mt-3 text-sm text-muted">
-              Showing {visible.length} of {ranked.length}. Filters hide shares; they don’t change anyone’s score.
-            </p>
-          </aside>
+              <Separator />
+
+              <div className="space-y-4">
+                <p className="text-sm font-semibold">Filters</p>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="profitable"
+                    checked={filters.profitableOnly}
+                    onCheckedChange={(c) => setFilters((f) => ({ ...f, profitableOnly: c === true }))}
+                  />
+                  <Label htmlFor="profitable" className="leading-snug font-normal">
+                    Profitable companies only
+                  </Label>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="uptrend"
+                    checked={filters.uptrendOnly}
+                    onCheckedChange={(c) => setFilters((f) => ({ ...f, uptrendOnly: c === true }))}
+                  />
+                  <Label htmlFor="uptrend" className="leading-snug font-normal">
+                    Only shares above their 200-day average
+                  </Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="max-debt" className="font-normal">
+                    Maximum net debt
+                  </Label>
+                  <Select
+                    value={filters.maxNetDebtEbitda === null ? "any" : String(filters.maxNetDebtEbitda)}
+                    onValueChange={(v) => setFilters((f) => ({ ...f, maxNetDebtEbitda: v === "any" ? null : Number(v) }))}
+                  >
+                    <SelectTrigger id="max-debt" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any amount</SelectItem>
+                      <SelectItem value="3">Up to 3× EBITDA</SelectItem>
+                      <SelectItem value="2">Up to 2× EBITDA</SelectItem>
+                      <SelectItem value="1">Up to 1× EBITDA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <p className="text-muted-foreground text-sm">
+                Showing {visible.length} of {ranked.length}. Filters hide shares; they don’t change anyone’s score.
+              </p>
+            </CardFooter>
+          </Card>
 
           {/* Ranking */}
-          <section aria-labelledby="ranking" className="min-w-0">
-            <h2 id="ranking" className="font-semibold">
-              Full ranking
-            </h2>
-            <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[36rem] border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-rule text-left text-muted">
-                    <th scope="col" className="w-10 py-2 pr-2 font-normal">
-                      #
-                    </th>
-                    <th scope="col" className="py-2 pr-4 font-normal">
-                      Share
-                    </th>
-                    <th scope="col" className="w-48 py-2 pr-4 font-normal">
-                      Score
-                    </th>
+          <Card className="min-w-0 gap-4" aria-labelledby="ranking">
+            <CardHeader>
+              <CardTitle id="ranking">Full ranking</CardTitle>
+              <CardDescription>
+                Value, Quality and Momentum are percentiles: 80 means better than 80% of the list on that measure.
+              </CardDescription>
+              <CardAction>
+                <Badge variant="secondary" className="tabular-nums">
+                  {visible.length} shares
+                </Badge>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="px-2 sm:px-4">
+              <Table className="min-w-[36rem]">
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-muted-foreground w-10 font-normal">#</TableHead>
+                    <TableHead className="text-muted-foreground font-normal">Share</TableHead>
+                    <TableHead className="text-muted-foreground w-48 font-normal">Score</TableHead>
                     {GROUPS.map((g) => (
-                      <th key={g} scope="col" className="hidden py-2 pr-4 text-right font-normal md:table-cell">
+                      <TableHead key={g} className="text-muted-foreground hidden text-right font-normal md:table-cell">
                         {GROUP_LABEL[g]}
-                      </th>
+                      </TableHead>
                     ))}
-                    <th scope="col" className="py-2 pr-4 text-right font-normal">
-                      Price
-                    </th>
-                    <th scope="col" className="py-2 text-right font-normal">
-                      6 months
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+                    <TableHead className="text-muted-foreground text-right font-normal">Price</TableHead>
+                    <TableHead className="text-muted-foreground text-right font-normal">6 months</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {visible.map((s) => (
-                    <tr
+                    <TableRow
                       key={s.code}
-                      onClick={() => setOpenCode(s.code)}
-                      className={`cursor-pointer border-b border-rule/70 hover:bg-surface ${openCode === s.code ? "bg-surface" : ""}`}
+                      onClick={() => open(s.code)}
+                      data-state={sheetOpen && selected === s.code ? "selected" : undefined}
+                      className="cursor-pointer"
                     >
-                      <td className="py-2.5 pr-2 tabular-nums text-muted">{s.rank}</td>
-                      <td className="py-2.5 pr-4">
+                      <TableCell className="text-muted-foreground tabular-nums">{s.rank}</TableCell>
+                      <TableCell>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOpenCode(s.code);
+                            open(s.code);
                           }}
-                          className="text-left"
+                          className="focus-visible:ring-ring/50 rounded-sm text-left outline-none focus-visible:ring-[3px]"
                         >
                           <span className="font-bold" style={{ fontStretch: "115%" }}>
                             {s.code}
                           </span>
-                          <span className="ml-2 text-muted">{s.name}</span>
+                          <span className="text-muted-foreground ml-2">{s.name}</span>
                         </button>
-                      </td>
-                      <td className="py-2.5 pr-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-3">
                           <span className="w-7 text-right font-semibold tabular-nums">{s.score.toFixed(0)}</span>
-                          <div className="flex-1">
-                            <ContributionBar stock={s} height={6} />
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex-1 py-1.5">
+                                <ContributionBar stock={s} height={6} />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {GROUPS.map((g) => `${GROUP_LABEL[g]} ${s.contribution[g].toFixed(0)}`).join(" + ")}
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
-                      </td>
+                      </TableCell>
                       {GROUPS.map((g) => (
-                        <td key={g} className="hidden py-2.5 pr-4 text-right tabular-nums md:table-cell">
-                          {s.groups[g] === null ? <span className="text-muted">—</span> : Math.round(s.groups[g]!)}
-                        </td>
+                        <TableCell key={g} className="hidden text-right tabular-nums md:table-cell">
+                          {s.groups[g] === null ? <span className="text-muted-foreground">—</span> : Math.round(s.groups[g]!)}
+                        </TableCell>
                       ))}
-                      <td className="py-2.5 pr-4 text-right tabular-nums">{rand(s.price)}</td>
-                      <td
-                        className="py-2.5 text-right tabular-nums"
-                        style={{ color: s.technicals.ret6m === null ? undefined : s.technicals.ret6m >= 0 ? "var(--momentum)" : "var(--bad)" }}
+                      <TableCell className="text-right tabular-nums">{rand(s.price)}</TableCell>
+                      <TableCell
+                        className={cn(
+                          "text-right tabular-nums",
+                          s.technicals.ret6m !== null && (s.technicals.ret6m >= 0 ? "text-momentum" : "text-destructive"),
+                        )}
                       >
                         {signed(s.technicals.ret6m)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-3 text-xs text-muted">
-              Value, Quality and Momentum columns are percentiles: 80 means better than 80% of the list on that measure.
-            </p>
-          </section>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
 
-        <footer className="grid gap-6 border-t border-rule py-8 text-sm text-muted md:grid-cols-2">
+        <Separator />
+
+        <footer className="text-muted-foreground grid gap-6 pb-4 text-sm md:grid-cols-2">
           <div>
-            <h2 className="font-semibold text-ink">How the score works</h2>
+            <h2 className="text-foreground font-semibold">How the score works</h2>
             <p className="mt-2 max-w-prose">
               Each share is ranked against the rest of the list on every measure, so a score of 80 means it beats most of
               its peers — not that it will go up. Loss-making companies rank last on valuation, and shares missing a whole
@@ -328,28 +397,35 @@ export default function Picker({ snapshot, log }: { snapshot: Snapshot; log: Pic
             {prevDate && <p className="mt-2">Shares marked New weren’t on the shortlist on {longDate(prevDate)}.</p>}
           </div>
           <div>
-            <h2 className="font-semibold text-ink">Before you buy anything</h2>
+            <h2 className="text-foreground font-semibold">Before you buy anything</h2>
             <p className="mt-2 max-w-prose">
               Kgetha screens public data mechanically. It isn’t financial advice and doesn’t know your circumstances. Read the
               company’s latest results and SENS announcements before acting on a ranking.
             </p>
             {snapshot.skipped.length > 0 && (
-              <details className="mt-3">
-                <summary className="cursor-pointer">{snapshot.skipped.length} shares couldn’t be scored</summary>
-                <ul className="mt-2 space-y-1">
-                  {snapshot.skipped.map((s) => (
-                    <li key={s.code}>
-                      <strong className="text-ink">{s.code}</strong>: {s.reason}
-                    </li>
-                  ))}
-                </ul>
-              </details>
+              <Collapsible className="mt-3">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="group -ml-3">
+                    {snapshot.skipped.length} shares couldn’t be scored
+                    <ChevronDown className="transition-transform group-data-[state=open]:rotate-180" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <ul className="mt-2 space-y-1">
+                    {snapshot.skipped.map((s) => (
+                      <li key={s.code}>
+                        <strong className="text-foreground">{s.code}</strong>: {s.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </div>
         </footer>
       </main>
 
-      {open && <StockDrawer stock={open} total={ranked.length} onClose={() => setOpenCode(null)} />}
+      <StockSheet stock={current} total={ranked.length} open={sheetOpen} onOpenChange={setSheetOpen} />
     </div>
   );
 }
