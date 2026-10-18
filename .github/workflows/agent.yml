@@ -1,0 +1,52 @@
+name: Run stock picker agent
+
+on:
+  schedule:
+    # 15:40 UTC = 17:40 SAST, Monday–Friday, after the JSE closing auction.
+    - cron: "40 15 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stock-picker-agent
+  cancel-in-progress: false
+
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+    # ~45 shares × 4 requests at 5 requests/minute ≈ 36 minutes on the free plan.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Keeps today's raw responses, so re-running a failed job doesn't spend requests twice.
+      - uses: actions/cache@v4
+        with:
+          path: agent/.cache
+          key: roic-cache-${{ github.run_id }}
+          restore-keys: roic-cache-
+
+      - name: Run agent
+        run: npm run agent
+        env:
+          ROIC_API_KEY: ${{ secrets.ROIC_API_KEY }}
+          ROIC_EXCHANGE: ${{ vars.ROIC_EXCHANGE }}
+          ROIC_RPM: ${{ vars.ROIC_RPM }}
+
+      - name: Commit new snapshot
+        run: |
+          git config user.name "kgetha-agent"
+          git config user.email "kgetha-agent@users.noreply.github.com"
+          git add data/snapshot.json data/picks-log.json
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Agent: JSE snapshot for $(date -u +%F)"
+          git push
