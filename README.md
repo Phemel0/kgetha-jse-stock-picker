@@ -47,7 +47,7 @@ Requires Node 22+.
 
 ```bash
 npm install
-npm run dev            # dashboard with demo data at http://localhost:3000
+npm run dev            # landing page at http://localhost:3000, picker at /picks
 ```
 
 ### 1. Get a free roic.ai key
@@ -91,6 +91,15 @@ If the snapshot gets more than 4 days old, the dashboard shows a warning so you 
 | `TOP_N` | `10` | Shortlist length written to the picks log |
 
 The share list lives in `agent/universe.ts`: a starter set of ~45 large JSE shares. It isn't an official index list — edit it to suit you. Shares roic.ai doesn't recognise are skipped and listed at the bottom of the dashboard.
+
+## Site
+
+| Route | What it is |
+|---|---|
+| `/` | Landing page (design ported from the Optimus v0 template). Live numbers — market stats, today's top 5 and the full ranking marquee — come from the latest snapshot at build time, so each agent commit refreshes them. |
+| `/picks` | The stock picker dashboard. |
+
+Landing sections live in `components/landing/`. Its warm neutral theme and Instrument fonts are scoped to the `.landing` class in `app/globals.css`, so the picker keeps its own theme.
 
 ## UI
 

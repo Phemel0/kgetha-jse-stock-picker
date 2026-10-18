@@ -114,3 +114,6 @@ export interface ScoredStock extends StockSnapshot {
   thesis: string;
   passesFilters: boolean;
 }
+
+/** Daily shortlist history written by the agent. */
+export type PicksLog = { date: string; picks: { code: string; score: number }[] }[];

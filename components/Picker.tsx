@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { ChevronDown, Info, TriangleAlert } from "lucide-react";
-import type { PicksLog } from "@/app/page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { longDate, rand, signed } from "@/lib/format";
 import { DEFAULT_FILTERS, DEFAULT_WEIGHTS, GROUPS, GROUP_LABEL, scoreUniverse } from "@/lib/scoring";
-import type { FactorGroup, Filters, Snapshot, Weights } from "@/lib/types";
+import type { FactorGroup, Filters, PicksLog, Snapshot, Weights } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ContributionBar, groupColor, tint } from "./bits";
 import StockSheet from "./StockSheet";
@@ -92,7 +92,9 @@ export default function Picker({ snapshot, log }: { snapshot: Snapshot; log: Pic
       <header className="border-b">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 sm:px-6">
           <div className="flex items-baseline gap-3">
-            <span className="code-display text-2xl">Kgetha</span>
+            <Link href="/" className="code-display focus-visible:ring-ring/50 rounded-sm text-2xl outline-none focus-visible:ring-[3px]">
+              Kgetha
+            </Link>
             <span className="text-muted-foreground">JSE stock picker</span>
           </div>
           {isDemo ? (
