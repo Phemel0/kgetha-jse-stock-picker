@@ -1,4 +1,4 @@
-# Kgetha — JSE stock picker agent
+# Kgetha — JSE stock and crypto picker agent
 
 An agent that screens JSE shares every trading day, scores them on **value**, **quality** and **momentum**, and publishes a ranked shortlist with the reasons behind each pick. The Next.js dashboard lets you re-weight the score and filter the list instantly.
 
@@ -92,12 +92,53 @@ If the snapshot gets more than 4 days old, the dashboard shows a warning so you 
 
 The share list lives in `agent/universe.ts`: a starter set of ~45 large JSE shares. It isn't an official index list — edit it to suit you. Shares roic.ai doesn't recognise are skipped and listed at the bottom of the dashboard.
 
+## Crypto picker
+
+`/crypto` ranks coins the same way the share picker ranks shares, with prices in rand.
+
+**The list:** the top 100 coins by market cap, plus every coin with a ZAR pair on **Luno** or **VALR** (so you can see what you can actually buy locally). Stablecoins, wrapped and bridged copies, staking receipts and tokenised gold are left out, because they track another asset rather than trade on their own merits. The dashboard lists what was left out and why.
+
+| Group | Measures | Default weight |
+|---|---|---|
+| Fundamentals | Market cap, daily volume / market cap (capped at 25% so wash trading doesn't help), share of the eventual supply already circulating, length of price history | 30% |
+| Momentum | 12-month return excluding the last month, 6- and 3-month returns, price vs 200-day average | 40% |
+| Stability | 1-year volatility, downside volatility, worst peak-to-trough fall in the past year — calmer scores higher | 30% |
+
+Filters: buyable in rand on Luno/VALR, above the 200-day average, and a volatility ceiling. Watch-outs flag extreme volatility (≥ 120% a year), falls of 75% or more, thin trading, heavy future dilution (under half the supply circulating), short history and RSI extremes. The logic is in `lib/crypto/`.
+
+Crypto trades every day, so periods are calendar days (30 / 91 / 182 / 365) and volatility is annualised over 365 days. Prices are in rand, so volatility includes the rand's own moves against the dollar.
+
+### Run it
+
+Data comes from [CoinGecko](https://www.coingecko.com/en/api). No key is needed, but the keyless limits are shared and slow; a free **Demo** key makes a run take about 5 minutes instead of ~15.
+
+```bash
+# optional: add COINGECKO_API_KEY to .env
+MAX_COINS=5 npm run agent:crypto   # quick check
+npm run agent:crypto               # full run, ~120 requests
+```
+
+It writes `data/crypto-snapshot.json` and `data/crypto-picks-log.json`. Until it has run, the page shows invented demo coins (`npm run demo-data:crypto` regenerates them).
+
+To schedule it, add `COINGECKO_API_KEY` as a repository secret (optional) and run **Actions → Run crypto picker agent** once. After that it runs every day at 07:05 SAST and Vercel redeploys on the commit. Optional variables: `COINGECKO_PLAN=pro` for a paid key, `COINGECKO_RPM` to change the request rate.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `COINGECKO_API_KEY` | — | Free Demo key (optional) |
+| `COINGECKO_RPM` | 30 with a key, 8 without | Requests per minute |
+| `CRYPTO_TOP_N` | `100` | Size of the market-cap list |
+| `CRYPTO_SA_LISTED` | on | Set to `0` to skip adding Luno/VALR coins outside the top list |
+| `MAX_COINS` | all | Cap the number of coins |
+
+CoinGecko's Luno and VALR listings and its category tags haven't been checked against a live key while building this — the first run's log prints how many ZAR pairs it found on each exchange, so check those numbers look right.
+
 ## Site
 
 | Route | What it is |
 |---|---|
 | `/` | Landing page (design ported from the Optimus v0 template). Live numbers — market stats, today's top 5 and the full ranking marquee — come from the latest snapshot at build time, so each agent commit refreshes them. |
 | `/picks` | The stock picker dashboard. |
+| `/crypto` | The crypto picker dashboard. |
 
 Landing sections live in `components/landing/`. Its warm neutral theme and Instrument fonts are scoped to the `.landing` class in `app/globals.css`, so the picker keeps its own theme.
 
@@ -119,6 +160,8 @@ npx shadcn@latest add dialog tabs
 | `npm run agent` | Run the screening agent |
 | `npm run agent:discover` | Check JSE coverage on your key |
 | `npm run demo-data` | Regenerate the demo snapshot |
+| `npm run agent:crypto` | Run the crypto agent |
+| `npm run demo-data:crypto` | Regenerate the crypto demo snapshot |
 | `npm test` | Unit tests, plus an end-to-end agent run against a mocked API |
 
 ## Limits worth knowing

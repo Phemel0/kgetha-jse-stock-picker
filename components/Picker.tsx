@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Info, TriangleAlert } from "lucide-react";
+import MarketSwitch from "@/components/MarketSwitch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,22 +91,25 @@ export default function Picker({ snapshot, log }: { snapshot: Snapshot; log: Pic
   return (
     <div className="min-h-screen">
       <header className="border-b">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-4 sm:px-6">
           <div className="flex items-baseline gap-3">
             <Link href="/" className="code-display focus-visible:ring-ring/50 rounded-sm text-2xl outline-none focus-visible:ring-[3px]">
               Kgetha
             </Link>
-            <span className="text-muted-foreground">JSE stock picker</span>
+            <span className="text-muted-foreground hidden sm:inline">JSE stock picker</span>
           </div>
-          {isDemo ? (
-            <Badge variant="outline" className="border-warn/50 text-warn">
-              Demo data
-            </Badge>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              Prices to {priceDate ? longDate(priceDate) : "—"}, from roic.ai
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {isDemo ? (
+              <Badge variant="outline" className="border-warn/50 text-warn">
+                Demo data
+              </Badge>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Prices to {priceDate ? longDate(priceDate) : "—"}, from roic.ai
+              </p>
+            )}
+            <MarketSwitch active="shares" />
+          </div>
         </div>
       </header>
 

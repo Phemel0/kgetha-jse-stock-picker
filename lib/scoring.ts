@@ -77,7 +77,7 @@ export function percentileRanks(values: (number | null)[]): (number | null)[] {
   return out;
 }
 
-function weightedMean(items: { value: number | null; weight: number }[]): number | null {
+export function weightedMean(items: { value: number | null; weight: number }[]): number | null {
   let sum = 0;
   let w = 0;
   for (const it of items) {

@@ -35,6 +35,9 @@
   --quality: #3e6a8a;
   --momentum: #2e7d57;
   --warn: #8a6a12;
+  /* Crypto picker groups (momentum reuses the green above) */
+  --fundamentals: #3e6a8a;
+  --stability: #7a4f8c;
 
   color-scheme: light;
 }
@@ -63,6 +66,8 @@
   --color-quality: var(--quality);
   --color-momentum: var(--momentum);
   --color-warn: var(--warn);
+  --color-fundamentals: var(--fundamentals);
+  --color-stability: var(--stability);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

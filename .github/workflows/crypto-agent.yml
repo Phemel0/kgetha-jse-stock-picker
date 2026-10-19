@@ -1,0 +1,54 @@
+name: Run crypto picker agent
+
+on:
+  schedule:
+    # 05:05 UTC = 07:05 SAST, every day. Crypto trades 24/7; CoinGecko closes the daily candle at 00:00 UTC.
+    - cron: "5 5 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+# One crypto run at a time.
+concurrency:
+  group: kgetha-agents-crypto
+  cancel-in-progress: false
+
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+    # ~120 requests: about 5 minutes with a free Demo key, ~15 without one.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/cache@v4
+        with:
+          path: agent/.cache-crypto
+          key: coingecko-cache-${{ github.run_id }}
+          restore-keys: coingecko-cache-
+
+      - name: Run agent
+        run: npm run agent:crypto
+        env:
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+          COINGECKO_PLAN: ${{ vars.COINGECKO_PLAN }}
+          COINGECKO_RPM: ${{ vars.COINGECKO_RPM }}
+
+      - name: Commit new snapshot
+        run: |
+          git config user.name "kgetha-agent"
+          git config user.email "kgetha-agent@users.noreply.github.com"
+          git add data/crypto-snapshot.json data/crypto-picks-log.json
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Agent: crypto snapshot for $(date -u +%F)"
+          # The share agent may have pushed in the meantime.
+          git pull --rebase
+          git push

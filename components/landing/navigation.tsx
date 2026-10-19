@@ -11,6 +11,7 @@ const navLinks = [
   { name: "The agent", href: "#agent" },
   { name: "Shortlist", href: "#shortlist" },
   { name: "Run it yourself", href: "#run" },
+  { name: "Crypto", href: "/crypto" },
 ];
 
 export function Navigation() {

@@ -10,6 +10,7 @@ const columns: { title: string; links: { name: string; href: string; external?: 
     title: "Kgetha",
     links: [
       { name: "Today’s picks", href: "/picks" },
+      { name: "Crypto picks", href: "/crypto" },
       { name: "How the score works", href: "#scoring" },
       { name: "The agent", href: "#agent" },
       { name: "Coverage", href: "#universe" },
@@ -27,6 +28,7 @@ const columns: { title: string; links: { name: string; href: string; external?: 
     title: "Data",
     links: [
       { name: "roic.ai", href: "https://www.roic.ai", external: true },
+      { name: "CoinGecko", href: "https://www.coingecko.com", external: true },
       { name: "Limits", href: "#limits" },
     ],
   },
