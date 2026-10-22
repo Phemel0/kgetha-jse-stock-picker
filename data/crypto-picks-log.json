@@ -108,5 +108,60 @@
     "score": 65.9
    }
   ]
+ },
+ {
+  "date": "2026-10-22",
+  "picks": [
+   {
+    "id": "quant-network",
+    "symbol": "QNT",
+    "score": 74.2
+   },
+   {
+    "id": "near",
+    "symbol": "NEAR",
+    "score": 73.7
+   },
+   {
+    "id": "monero",
+    "symbol": "XMR",
+    "score": 73.7
+   },
+   {
+    "id": "just",
+    "symbol": "JST",
+    "score": 72.5
+   },
+   {
+    "id": "whitebit",
+    "symbol": "WBT",
+    "score": 68.3
+   },
+   {
+    "id": "binancecoin",
+    "symbol": "BNB",
+    "score": 68
+   },
+   {
+    "id": "zcash",
+    "symbol": "ZEC",
+    "score": 66.6
+   },
+   {
+    "id": "bitcoin",
+    "symbol": "BTC",
+    "score": 66.5
+   },
+   {
+    "id": "uniswap",
+    "symbol": "UNI",
+    "score": 66
+   },
+   {
+    "id": "solana",
+    "symbol": "SOL",
+    "score": 65.4
+   }
+  ]
  }
 ]
