@@ -1538,5 +1538,60 @@
     "score": 68
    }
   ]
+ },
+ {
+  "date": "2026-11-17",
+  "picks": [
+   {
+    "id": "just",
+    "symbol": "JST",
+    "score": 77.3
+   },
+   {
+    "id": "quant-network",
+    "symbol": "QNT",
+    "score": 71.7
+   },
+   {
+    "id": "figure-heloc",
+    "symbol": "FIGR_HELOC",
+    "score": 70.5
+   },
+   {
+    "id": "whitebit",
+    "symbol": "WBT",
+    "score": 70.4
+   },
+   {
+    "id": "bittorrent",
+    "symbol": "BTT",
+    "score": 70.2
+   },
+   {
+    "id": "monero",
+    "symbol": "XMR",
+    "score": 70
+   },
+   {
+    "id": "near",
+    "symbol": "NEAR",
+    "score": 69.6
+   },
+   {
+    "id": "hashnote-usyc",
+    "symbol": "USYC",
+    "score": 69.2
+   },
+   {
+    "id": "injective-protocol",
+    "symbol": "INJ",
+    "score": 68.7
+   },
+   {
+    "id": "bitcoin",
+    "symbol": "BTC",
+    "score": 68.2
+   }
+  ]
  }
 ]
