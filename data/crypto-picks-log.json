@@ -1648,5 +1648,60 @@
     "score": 68
    }
   ]
+ },
+ {
+  "date": "2026-11-19",
+  "picks": [
+   {
+    "id": "just",
+    "symbol": "JST",
+    "score": 77.3
+   },
+   {
+    "id": "quant-network",
+    "symbol": "QNT",
+    "score": 71.7
+   },
+   {
+    "id": "figure-heloc",
+    "symbol": "FIGR_HELOC",
+    "score": 71.4
+   },
+   {
+    "id": "hashnote-usyc",
+    "symbol": "USYC",
+    "score": 69.9
+   },
+   {
+    "id": "bittorrent",
+    "symbol": "BTT",
+    "score": 69.7
+   },
+   {
+    "id": "near",
+    "symbol": "NEAR",
+    "score": 69.6
+   },
+   {
+    "id": "whitebit",
+    "symbol": "WBT",
+    "score": 68.7
+   },
+   {
+    "id": "superstate-short-duration-us-government-securities-fund-ustb",
+    "symbol": "USTB",
+    "score": 68.5
+   },
+   {
+    "id": "injective-protocol",
+    "symbol": "INJ",
+    "score": 68.1
+   },
+   {
+    "id": "tron",
+    "symbol": "TRX",
+    "score": 67.9
+   }
+  ]
  }
 ]
