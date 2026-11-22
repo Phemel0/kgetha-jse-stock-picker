@@ -1813,5 +1813,60 @@
     "score": 70
    }
   ]
+ },
+ {
+  "date": "2026-11-22",
+  "picks": [
+   {
+    "id": "just",
+    "symbol": "JST",
+    "score": 79.1
+   },
+   {
+    "id": "figure-heloc",
+    "symbol": "FIGR_HELOC",
+    "score": 77.2
+   },
+   {
+    "id": "hashnote-usyc",
+    "symbol": "USYC",
+    "score": 74.3
+   },
+   {
+    "id": "superstate-short-duration-us-government-securities-fund-ustb",
+    "symbol": "USTB",
+    "score": 72
+   },
+   {
+    "id": "tron",
+    "symbol": "TRX",
+    "score": 71.7
+   },
+   {
+    "id": "spiko-amundi-overnight-swap-fund-eur",
+    "symbol": "EURSAFO",
+    "score": 71.6
+   },
+   {
+    "id": "quant-network",
+    "symbol": "QNT",
+    "score": 70.9
+   },
+   {
+    "id": "near",
+    "symbol": "NEAR",
+    "score": 70.5
+   },
+   {
+    "id": "janus-henderson-anemoy-aaa-clo-fund",
+    "symbol": "JAAA",
+    "score": 70.2
+   },
+   {
+    "id": "ousg",
+    "symbol": "OUSG",
+    "score": 68.8
+   }
+  ]
  }
 ]
